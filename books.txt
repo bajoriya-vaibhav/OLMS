@@ -1,0 +1,4 @@
+10000 This book is not for Edison
+10001 Sherlock Holmes
+10002 Rich Dad Poor Dad
+10003 Alchemist
