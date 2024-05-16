@@ -79,10 +79,13 @@ void delete_user(User users[], int* user_count, const char* username) {
     save_users(users, *user_count);
 }
 
-void list_users(User users[], int user_count) {
-    char buffer[1024] ={0};
-    
+char * list_users(User users[], int user_count) {
+    char buffer[5000] ={0};
+    snprintf(buffer, 5000, "User_Id, Username, Admin\n");
     for (int i = 0; i < user_count; i++) {
-        printf("User_Id: %s, Username: %s, Admin: %s\n",users[i].user_id, users[i].username, users[i].is_admin ? "Yes" : "No");
+        char str[150] = {0};
+        sprintf(str, "%s, %s, %s\n", users[i].user_id, users[i].username, users[i].is_admin ? "Yes" : "No");
+        strncat(buffer,str,5000 - strlen(buffer) - 1);
     }
+    return strdup(buffer);
 }

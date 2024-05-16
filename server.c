@@ -41,8 +41,11 @@ void manage_users(int client_socket) {
 
         switch (choice) {
             case 1:
+                memset(buffer, 0, BUFFER_SIZE);
                 pthread_mutex_lock(&file_mutex);
-                list_users(users, user_count);
+                snprintf(buffer, BUFFER_SIZE, "%s", list_users(users, user_count));
+                send(client_socket, buffer, strlen(buffer), 0);
+                memset(buffer, 0, BUFFER_SIZE);
                 pthread_mutex_unlock(&file_mutex);
                 break;
             case 2: {

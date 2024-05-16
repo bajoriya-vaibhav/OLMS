@@ -20,6 +20,6 @@ void load_users(User users[], int* user_count);
 void save_users(User users[], int user_count);
 void add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin);
 void delete_user(User users[], int* user_count, const char* username);
-void list_users(User users[], int user_count);
+char * list_users(User users[], int user_count);
 
 #endif
