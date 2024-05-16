@@ -16,17 +16,15 @@ Book books[MAX_BOOKS];
 int book_count;
 pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;;
 
-void send_admin_menu(int client_socket) {
-    char buffer[BUFFER_SIZE] = {0};
-    snprintf(buffer, BUFFER_SIZE, "\nLibrary Management Menu:\n1. Manage Users\n2. List Books\n3. Add Book\n4. Delete Book\n5. Search Book\n6. Exit\nEnter your choice:");
-    send(client_socket, buffer, strlen(buffer), 0);
-}
+// void send_admin_menu(char buffer[BUFFER_SIZE], int client_socket) {
+//     strncat(buffer, "\nLibrary Management Menu:\n1. Manage Users\n2. List Books\n3. Add Book\n4. Delete Book\n5. Search Book\n6. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
+//     send(client_socket, buffer, strlen(buffer), 0);
+// }
 
-void send_user_menu(int client_socket) {
-    char buffer[BUFFER_SIZE] = {0};
-    snprintf(buffer, BUFFER_SIZE, "\nLibrary Menu:\n1. List Books\n2. Search Books\n3. Issue Book\n4. Return Book\n5. Exit\nEnter your choice:");
-    send(client_socket, buffer, strlen(buffer), 0);
-}
+// void send_user_menu(char buffer[BUFFER_SIZE], int client_socket) {
+//     strncat(buffer, "\nLibrary Menu:\n1. List Books\n2. Search Books\n3. Issue Book\n4. Return Book\n5. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
+//     send(client_socket, buffer, strlen(buffer), 0);
+// }
 
 void manage_users(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
@@ -157,7 +155,6 @@ void* handle_client(void* arg) {
             authenticated = 1;
             is_admin_user = is_admin(users, user_count, input_username);
             snprintf(buffer, BUFFER_SIZE, "Authentication successful\n");
-            send(client_socket, buffer, strlen(buffer), 0);
             strcpy(username, input_username);
         } else {
             snprintf(buffer, BUFFER_SIZE, "Exit Authentication failed\n");
@@ -175,9 +172,11 @@ void* handle_client(void* arg) {
 
     while (authenticated) {
         if (is_admin_user) {
-            send_admin_menu(client_socket);
+            strncat(buffer, "\nLibrary Management Menu:\n1. Manage Users\n2. List Books\n3. Add Book\n4. Delete Book\n5. Search Book\n6. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
+            send(client_socket, buffer, strlen(buffer), 0);
         } else {
-            send_user_menu(client_socket);
+            strncat(buffer, "\nLibrary Menu:\n1. List Books\n2. Search Books\n3. Issue Book\n4. Return Book\n5. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
+            send(client_socket, buffer, strlen(buffer), 0);
         }
         
         memset(buffer, 0, BUFFER_SIZE);
@@ -274,7 +273,6 @@ void* handle_client(void* arg) {
                     break;
                 }
                 case 3:
-                    // Issue Book (not implemented in this example)
                     snprintf(buffer, BUFFER_SIZE, "Issue Book feature is not implemented.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
