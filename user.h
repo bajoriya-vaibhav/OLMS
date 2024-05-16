@@ -8,6 +8,7 @@
 #define MAX_PASSWORD_LENGTH 50
 
 typedef struct {
+    char user_id[6];
     char username[MAX_USERNAME_LENGTH];
     char password[MAX_PASSWORD_LENGTH];
     bool is_admin;

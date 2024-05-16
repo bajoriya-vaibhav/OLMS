@@ -27,7 +27,7 @@ void load_users(User users[], int* user_count) {
         return;
     }
     *user_count = 0;
-    while (fscanf(file, "%s %s %d", users[*user_count].username, users[*user_count].password, (int*)&users[*user_count].is_admin) == 3) {
+    while (fscanf(file, "%s %s %s %d",users[*user_count].user_id, users[*user_count].username, users[*user_count].password, (int*)&users[*user_count].is_admin) == 4) {
         (*user_count)++;
     }
     fclose(file);
@@ -40,7 +40,7 @@ void save_users(User users[], int user_count) {
         return;
     }
     for (int i = 0; i < user_count; i++) {
-        fprintf(file, "%s %s %d\n", users[i].username, users[i].password, users[i].is_admin);
+        fprintf(file, "%s %s %s %d\n", users[i].user_id, users[i].username, users[i].password, users[i].is_admin);
     }
     fclose(file);
 }
@@ -50,6 +50,9 @@ void add_user(User users[], int* user_count, const char* username, const char* p
         printf("User limit reached. Cannot add more users.\n");
         return;
     }
+    char str[6];
+    sprintf(str, "%d", 10000+*user_count);
+    strcpy(users[*user_count].user_id,str);
     strcpy(users[*user_count].username, username);
     strcpy(users[*user_count].password, password);
     users[*user_count].is_admin = is_admin;
@@ -78,6 +81,6 @@ void delete_user(User users[], int* user_count, const char* username) {
 
 void list_users(User users[], int user_count) {
     for (int i = 0; i < user_count; i++) {
-        printf("Username: %s, Admin: %s\n", users[i].username, users[i].is_admin ? "Yes" : "No");
+        printf("User_Id: %s, Username: %s, Admin: %s\n",users[i].user_id, users[i].username, users[i].is_admin ? "Yes" : "No");
     }
 }

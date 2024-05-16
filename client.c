@@ -24,7 +24,6 @@ int main(){
         memset(buf, 0, sizeof(buf));
         fgets(buf, sizeof(buf), stdin);
         write(sd, buf, sizeof(buf));
-        memset(buf, 0, sizeof(buf));
     }
     close(sd);
 }

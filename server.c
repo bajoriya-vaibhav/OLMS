@@ -14,7 +14,7 @@ User users[MAX_USERS];
 int user_count = 1;
 Book books[MAX_BOOKS];
 int book_count;
-pthread_mutex_t file_mutex;
+pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;;
 
 void send_admin_menu(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
@@ -160,14 +160,14 @@ void* handle_client(void* arg) {
             send(client_socket, buffer, strlen(buffer), 0);
             strcpy(username, input_username);
         } else {
-            snprintf(buffer, BUFFER_SIZE, "Authentication failed\n");
+            snprintf(buffer, BUFFER_SIZE, "Exit Authentication failed\n");
             send(client_socket, buffer, strlen(buffer), 0);
             close(client_socket);
             return NULL;
         }
     }
     else {
-        snprintf(buffer, BUFFER_SIZE, "Invalid choice\n");
+        snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice\n");
         send(client_socket, buffer, strlen(buffer), 0);
         close(client_socket);
         return NULL;
@@ -245,7 +245,7 @@ void* handle_client(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 default:
-                    snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
+                    snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice. Try again.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
             }
@@ -289,7 +289,7 @@ void* handle_client(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 default:
-                    snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
+                    snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice. Try again.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
             }
@@ -303,7 +303,6 @@ void* handle_client(void* arg) {
 int main() {
     load_users(users, &user_count);
     load_books(books, &book_count);
-
     int server_fd, new_socket;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
