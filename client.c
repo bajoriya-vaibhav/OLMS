@@ -15,7 +15,7 @@ int main(){
     serv.sin_port = htons(8080);
     connect(sd,(struct sockaddr *)&serv,sizeof(serv));
     while(1){
-        char buf[1024];
+        char buf[1024] = {0};
         read(sd, buf, sizeof(buf));
         printf("%s\n", buf);
         if(buf[0] == 'E' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't'){

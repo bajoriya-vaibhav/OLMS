@@ -16,16 +16,6 @@ Book books[MAX_BOOKS];
 int book_count;
 pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;;
 
-// void send_admin_menu(char buffer[BUFFER_SIZE], int client_socket) {
-//     strncat(buffer, "\nLibrary Management Menu:\n1. Manage Users\n2. List Books\n3. Add Book\n4. Delete Book\n5. Search Book\n6. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
-//     send(client_socket, buffer, strlen(buffer), 0);
-// }
-
-// void send_user_menu(char buffer[BUFFER_SIZE], int client_socket) {
-//     strncat(buffer, "\nLibrary Menu:\n1. List Books\n2. Search Books\n3. Issue Book\n4. Return Book\n5. Exit\nEnter your choice:", BUFFER_SIZE - strlen(buffer) - 1);
-//     send(client_socket, buffer, strlen(buffer), 0);
-// }
-
 void manage_users(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
     int choice;
@@ -193,11 +183,15 @@ void* handle_client(void* arg) {
                     break;
                 case 2:
                     pthread_mutex_lock(&file_mutex);
+                    memset(buffer, 0, BUFFER_SIZE);
+                    snprintf(buffer, BUFFER_SIZE, "Book Title   ISBN\n");
                     for (int i = 0; i < book_count; i++) {
-                        snprintf(buffer, BUFFER_SIZE, "Book Title: %s, ISBN: %s\n", books[i].title, books[i].isbn);
-                        send(client_socket, buffer, strlen(buffer), 0);
-                        memset(buffer, 0, BUFFER_SIZE);
+                        char str[150] = {0};
+                        sprintf(str, "%s    %s\n", books[i].title, books[i].isbn);
+                        strncat(buffer,str,5000 - strlen(buffer) - 1);
                     }
+                    send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     pthread_mutex_unlock(&file_mutex);
                     break;
                 case 3: {
