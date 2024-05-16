@@ -4,13 +4,13 @@
 #include <stdbool.h>
 
 #define MAX_BOOKS 100
-#define MAX_ISBN_LENGTH 20
+#define MAX_ISBN_LENGTH 6
 #define MAX_TITLE_LENGTH 100
 #define BUFFER_SIZE 1024
 
 typedef struct {
     char isbn[MAX_ISBN_LENGTH];
-    bool available;
+    int available;
     char user_id[6];
     char title[MAX_TITLE_LENGTH];
 } Book;

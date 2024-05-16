@@ -80,6 +80,8 @@ void delete_user(User users[], int* user_count, const char* username) {
 }
 
 void list_users(User users[], int user_count) {
+    char buffer[1024] ={0};
+    
     for (int i = 0; i < user_count; i++) {
         printf("User_Id: %s, Username: %s, Admin: %s\n",users[i].user_id, users[i].username, users[i].is_admin ? "Yes" : "No");
     }

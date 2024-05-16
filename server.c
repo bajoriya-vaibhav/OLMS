@@ -273,13 +273,22 @@ void* handle_client(void* arg) {
                     break;
                 }
                 case 3:
-                    snprintf(buffer, BUFFER_SIZE, "Issue Book feature is not implemented.\n");
-                    send(client_socket, buffer, strlen(buffer), 0);
+                    char str[6];
+                    for(int i=0;i<user_count;i++){
+                        if(strcmp(users[i].username,username)==0){
+                            strcpy(str,users[i].user_id);
+                        }
+                    }
+                    issue_book(client_socket, books, book_count, str);
                     break;
                 case 4:
-                    // Return Book (not implemented in this example)
-                    snprintf(buffer, BUFFER_SIZE, "Return Book feature is not implemented.\n");
-                    send(client_socket, buffer, strlen(buffer), 0);
+                    char str2[6];
+                    for(int i=0;i<user_count;i++){
+                        if(strcmp(users[i].username,username)==0){
+                            strcpy(str2,users[i].user_id);
+                        }
+                    }
+                    return_book(client_socket, books, book_count, str2);
                     break;
                 case 5:
                     authenticated = 0;
