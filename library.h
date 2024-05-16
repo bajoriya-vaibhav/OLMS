@@ -18,7 +18,7 @@ typedef struct {
 void load_books(Book books[], int *book_count);
 void save_books(Book books[], int book_count);
 void add_book(Book books[], int *book_count, const char *isbn, const char *title);
-void delete_book(Book books[], int *book_count, const char *isbn);
+int delete_book(Book books[], int *book_count, const char *isbn);
 const char* search_book(Book books[], int book_count, const char *isbn);
 void issue_book(int client_socket,Book books[],int book_count, const char *userid);
 void return_book(int client_socket,Book books[],int book_count, const char *userid);

@@ -205,8 +205,10 @@ void* handle_client(void* arg) {
                     pthread_mutex_lock(&file_mutex);
                     add_book(books, &book_count, isbn, title);
                     pthread_mutex_unlock(&file_mutex);
-                    snprintf(buffer, BUFFER_SIZE, "Book added successfully: %s\n", title);
+                    snprintf(buffer, BUFFER_SIZE, "Book added successfully: %s.\nPress Enter to continue...\n", title);
                     send(client_socket, buffer, strlen(buffer), 0);
+                    read(client_socket, buffer, BUFFER_SIZE);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 }
                 case 4: {
@@ -217,10 +219,16 @@ void* handle_client(void* arg) {
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s", isbn);
                     pthread_mutex_lock(&file_mutex);
-                    delete_book(books, &book_count, isbn);
+                    int x = delete_book(books, &book_count, isbn);
                     pthread_mutex_unlock(&file_mutex);
-                    snprintf(buffer, BUFFER_SIZE, "Book deleted successfully.\n");
-                    send(client_socket, buffer, strlen(buffer), 0);
+                    if(x){
+                        snprintf(buffer, BUFFER_SIZE, "Book deleted successfully.\n");
+                        send(client_socket, buffer, strlen(buffer), 0);
+                    }
+                    else{
+                        snprintf(buffer, BUFFER_SIZE, "Book not found.\n");
+                        send(client_socket, buffer, strlen(buffer), 0);
+                    }
                     break;
                 }
                 case 5: {

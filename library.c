@@ -45,7 +45,7 @@ void add_book(Book books[], int *book_count, const char *isbn, const char *title
     save_books(books, *book_count);
 }
 
-void delete_book(Book books[], int *book_count, const char *isbn) {
+int delete_book(Book books[], int *book_count, const char *isbn) {
     for (int i = 0; i < *book_count; i++) {
         if (strcmp(books[i].isbn, isbn) == 0) {
             for (int j = i; j < *book_count - 1; j++) {
@@ -53,9 +53,10 @@ void delete_book(Book books[], int *book_count, const char *isbn) {
             }
             (*book_count)--;
             save_books(books, *book_count);
-            return;
+            return 1;
         }
     }
+    return 0;
 }
 
 const char* search_book(Book books[], int book_count, const char *isbn) {
