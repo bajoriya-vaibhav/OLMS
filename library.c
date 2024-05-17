@@ -4,36 +4,88 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <fcntl.h> // For fcntl
 
 extern pthread_mutex_t file_mutex;
 
 void load_books(Book books[], int *book_count) {
-    FILE *file = fopen("books.txt", "r");
-    if (file == NULL) {
+    int fd = open("books.txt", O_RDONLY);
+    if (fd == -1) {
         perror("Failed to open books file");
         return;
     }
-    
+
+    // Set up the flock structure for a shared lock
+    struct flock lock;
+    lock.l_type = F_RDLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // Lock the whole file
+
+    // Obtain a shared lock
+    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+        perror("Failed to lock file for reading");
+        close(fd);
+        return;
+    }
+
+    FILE *file = fdopen(fd, "r");
+    if (file == NULL) {
+        perror("Failed to associate file descriptor with stream");
+        close(fd);
+        return;
+    }
+
     *book_count = 0;
-    while (fscanf(file, "%s %d %s %[^\n]", books[*book_count].isbn,(int*)&books[*book_count].available,books[*book_count].user_id, books[*book_count].title) != EOF) {
+    while (fscanf(file, "%s %d %s %[^\n]", books[*book_count].isbn, &books[*book_count].available, books[*book_count].user_id, books[*book_count].title) != EOF) {
         (*book_count)++;
     }
-    
-    fclose(file);
+
+    // Release the lock
+    lock.l_type = F_UNLCK;
+    fcntl(fd, F_SETLK, &lock);
+
+    fclose(file); // This will also close the file descriptor
 }
 
 void save_books(Book books[], int book_count) {
-    FILE *file = fopen("books.txt", "w");
-    if (file == NULL) {
+    int fd = open("books.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd == -1) {
         perror("Failed to open books file");
         return;
     }
-    
-    for (int i = 0; i < book_count; i++) {
-        fprintf(file, "%s %d %s %s\n", books[i].isbn,books[i].available, books[i].user_id, books[i].title);
+
+    // Set up the flock structure for an exclusive lock
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // Lock the whole file
+
+    // Obtain an exclusive lock
+    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+        perror("Failed to lock file for writing");
+        close(fd);
+        return;
     }
-    
-    fclose(file);
+
+    FILE *file = fdopen(fd, "w");
+    if (file == NULL) {
+        perror("Failed to associate file descriptor with stream");
+        close(fd);
+        return;
+    }
+
+    for (int i = 0; i < book_count; i++) {
+        fprintf(file, "%s %d %s %s\n", books[i].isbn, books[i].available, books[i].user_id, books[i].title);
+    }
+
+    // Release the lock
+    lock.l_type = F_UNLCK;
+    fcntl(fd, F_SETLK, &lock);
+
+    fclose(file); // This will also close the file descriptor
 }
 
 void add_book(Book books[], int *book_count, const char *isbn, const char *title) {

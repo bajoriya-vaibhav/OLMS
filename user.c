@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "user.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h> // For fcntl
 
 bool authenticate(User users[], int user_count, const char* username, const char* password) {
     for (int i = 0; i < user_count; i++) {
@@ -21,20 +24,64 @@ bool is_admin(User users[], int user_count, const char* username) {
 }
 
 void load_users(User users[], int* user_count) {
-    FILE* file = fopen("users.txt", "r");
+    int fd = open("users.txt", O_RDONLY);
+    if (fd == -1) {
+        perror("Failed to open books file");
+        return;
+    }
+    // Set up the flock structure for a shared lock
+    struct flock lock;
+    lock.l_type = F_RDLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // Lock the whole file
+
+    // Obtain a shared lock
+    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+        perror("Failed to lock file for reading");
+        close(fd);
+        return;
+    }
+
+    FILE *file = fdopen(fd, "r");
     if (file == NULL) {
         perror("Failed to open users file");
+        close(fd);
         return;
     }
     *user_count = 0;
     while (fscanf(file, "%s %s %s %d",users[*user_count].user_id, users[*user_count].username, users[*user_count].password, (int*)&users[*user_count].is_admin) == 4) {
         (*user_count)++;
     }
-    fclose(file);
+
+    // Release the lock
+    lock.l_type = F_UNLCK;
+    fcntl(fd, F_SETLK, &lock);
+
+    fclose(file); // This will also close the file descriptor
 }
 
 void save_users(User users[], int user_count) {
-    FILE* file = fopen("users.txt", "w");
+    int fd = open("users.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd == -1) {
+        perror("Failed to open books file");
+        return;
+    }
+
+    // Set up the flock structure for an exclusive lock
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0; // Lock the whole file
+
+    // Obtain an exclusive lock
+    if (fcntl(fd, F_SETLKW, &lock) == -1) {
+        perror("Failed to lock file for writing");
+        close(fd);
+        return;
+    }
+    FILE* file = fdopen(fd, "w");
     if (file == NULL) {
         perror("Failed to open users file");
         return;
@@ -45,10 +92,14 @@ void save_users(User users[], int user_count) {
     fclose(file);
 }
 
-void add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin) {
+int add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin) {
     if (*user_count >= MAX_USERS) {
-        printf("User limit reached. Cannot add more users.\n");
-        return;
+        return 0;
+    }
+    for (int i = 0; i < *user_count; i++) {
+        if (strcmp(users[i].username, username) == 0) {
+            return -1;
+        }
     }
     char str[6];
     sprintf(str, "%d", 10000+*user_count);
@@ -58,9 +109,10 @@ void add_user(User users[], int* user_count, const char* username, const char* p
     users[*user_count].is_admin = is_admin;
     (*user_count)++;
     save_users(users, *user_count);
+    return 1;
 }
 
-void delete_user(User users[], int* user_count, const char* username) {
+int delete_user(User users[], int* user_count, const char* username) {
     int index = -1;
     for (int i = 0; i < *user_count; i++) {
         if (strcmp(users[i].username, username) == 0) {
@@ -69,14 +121,14 @@ void delete_user(User users[], int* user_count, const char* username) {
         }
     }
     if (index == -1) {
-        printf("User not found.\n");
-        return;
+        return 0;
     }
     for (int i = index; i < *user_count - 1; i++) {
         users[i] = users[i + 1];
     }
     (*user_count)--;
     save_users(users, *user_count);
+    return 1;
 }
 
 char * list_users(User users[], int user_count) {

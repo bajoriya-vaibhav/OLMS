@@ -22,8 +22,7 @@ void manage_users(int client_socket) {
 
     while (1) {
         snprintf(buffer, BUFFER_SIZE, "\nManage Users Menu:\n");
-        send(client_socket, buffer, strlen(buffer), 0);
-        snprintf(buffer, BUFFER_SIZE, "1. List Users\n2. Add User\n3. Delete User\n4. Exit\nEnter your choice: ");
+        strncat(buffer, "1. List Users\n2. Add User\n3. Delete User\n4. Exit\nEnter your choice: ", BUFFER_SIZE - strlen(buffer) - 1);
         send(client_socket, buffer, strlen(buffer), 0);
         memset(buffer, 0, BUFFER_SIZE);
         read(client_socket, buffer, BUFFER_SIZE);
@@ -58,10 +57,20 @@ void manage_users(int client_socket) {
                 read(client_socket, buffer, BUFFER_SIZE);
                 sscanf(buffer, "%d", &is_admin);
                 pthread_mutex_lock(&file_mutex);
-                add_user(users, &user_count, new_username, new_password, is_admin);
+                int x = add_user(users, &user_count, new_username, new_password, is_admin);
                 pthread_mutex_unlock(&file_mutex);
-                snprintf(buffer, BUFFER_SIZE, "User added successfully.\n");
-                send(client_socket, buffer, strlen(buffer), 0);
+                if(x == 1){
+                    snprintf(buffer, BUFFER_SIZE, "User added successfully.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                else if(x==-1){
+                    snprintf(buffer, BUFFER_SIZE, "Username Already exist.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                else{
+                    snprintf(buffer, BUFFER_SIZE, "User limit reached. Cannot add more users. Or Some Error Occurred...\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
                 break;
             }
             case 3: {
@@ -72,10 +81,19 @@ void manage_users(int client_socket) {
                 read(client_socket, buffer, BUFFER_SIZE);
                 sscanf(buffer, "%s", del_username);
                 pthread_mutex_lock(&file_mutex);
-                delete_user(users, &user_count, del_username);
+                int x = delete_user(users, &user_count, del_username);
                 pthread_mutex_unlock(&file_mutex);
-                snprintf(buffer, BUFFER_SIZE, "User deleted successfully.\n");
-                send(client_socket, buffer, strlen(buffer), 0);
+                if(x){
+                    snprintf(buffer, BUFFER_SIZE, "User deleted successfully.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                else{
+                    snprintf(buffer, BUFFER_SIZE, "User not found.\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
+                    read(client_socket, buffer, BUFFER_SIZE);
+                    memset(buffer, 0, BUFFER_SIZE);
+                }
                 break;
             }
             case 4:
@@ -88,7 +106,7 @@ void manage_users(int client_socket) {
     }
 }
 
-void signup(int client_socket) {
+int signup(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
     char username[MAX_USERNAME_LENGTH];
     char password[MAX_PASSWORD_LENGTH];
@@ -106,11 +124,24 @@ void signup(int client_socket) {
     sscanf(buffer, "%s", password);
     
     pthread_mutex_lock(&file_mutex);
-    add_user(users, &user_count, username, password, false);  // New users are not admin by default
+    int x = add_user(users, &user_count, username, password, false);  // New users are not admin by default
     pthread_mutex_unlock(&file_mutex);
     
-    snprintf(buffer, BUFFER_SIZE, "Signup successful. You can now login with your new credentials.\n");
-    send(client_socket, buffer, strlen(buffer), 0);
+    if(x == 1){
+        snprintf(buffer, BUFFER_SIZE, "Signup successful. You can now login with your new credentials.\n");
+        send(client_socket, buffer, strlen(buffer), 0);
+    }
+    else if(x==-1){
+        snprintf(buffer, BUFFER_SIZE, "Username Already exist.\n");
+        send(client_socket, buffer, strlen(buffer), 0);
+        return 0;
+    }
+    else{
+        snprintf(buffer, BUFFER_SIZE, "User limit reached. Cannot add more users. Or Some Error Occurred...\n");
+        send(client_socket, buffer, strlen(buffer), 0);
+        return 0;
+    }
+    return 1;
 }
 
 
@@ -131,7 +162,12 @@ void* handle_client(void* arg) {
     int choice = atoi(buffer);
 
     if (choice == 1) {
-        signup(client_socket);
+        while(1){
+            int x = signup(client_socket);
+            if(x==1){
+                break;
+            }
+        }
     }
     if (choice  == 1 || choice == 2){
         // Authentication
@@ -202,6 +238,11 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s %[^\n]", isbn, title);
+                    if(strlen(title) == 0 || !(isbn > "10000" && isbn < "99999")) {
+                        snprintf(buffer, BUFFER_SIZE, "Invalid input. Try again.\n");
+                        send(client_socket, buffer, strlen(buffer), 0);
+                        break;
+                    }
                     pthread_mutex_lock(&file_mutex);
                     add_book(books, &book_count, isbn, title);
                     pthread_mutex_unlock(&file_mutex);

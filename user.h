@@ -18,8 +18,8 @@ bool authenticate(User users[], int user_count, const char* username, const char
 bool is_admin(User users[], int user_count, const char* username);
 void load_users(User users[], int* user_count);
 void save_users(User users[], int user_count);
-void add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin);
-void delete_user(User users[], int* user_count, const char* username);
+int add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin);
+int delete_user(User users[], int* user_count, const char* username);
 char * list_users(User users[], int user_count);
 
 #endif
