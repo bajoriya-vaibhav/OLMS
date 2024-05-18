@@ -1,4 +1,4 @@
-10000 1 NULL This book is not for Edison
+10000 0 10009 This book is not for Edison
 10001 1 NULL Sherlock Holmes
 10002 1 NULL Rich Dad Poor Dad
 10003 1 NULL Alchemist

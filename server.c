@@ -224,11 +224,13 @@ void* handle_client(void* arg) {
                     for (int i = 0; i < book_count; i++) {
                         char str[150] = {0};
                         sprintf(str, "%s    %s\n", books[i].title, books[i].isbn);
-                        strncat(buffer,str,5000 - strlen(buffer) - 1);
+                        strncat(buffer, str, BUFFER_SIZE - strlen(buffer) - 1);
                     }
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
                     pthread_mutex_unlock(&file_mutex);
+                    // read(client_socket, buffer, BUFFER_SIZE);
+                    // memset(buffer, 0, BUFFER_SIZE);
                     break;
                 case 3: {
                     char isbn[MAX_ISBN_LENGTH];
