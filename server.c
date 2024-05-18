@@ -281,9 +281,10 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s", isbn);
+                    memset(buffer, 0, BUFFER_SIZE);
                     const char* title = search_book(books, book_count, isbn);
                     snprintf(buffer, BUFFER_SIZE, "Book found: %s\n", title);
-                    send(client_socket, buffer, strlen(buffer), 0);
+                    send(client_socket, buffer, strlen("Book found:  "+strlen(title)), 0);
                     break;
                 }
                 case 6:
@@ -317,7 +318,7 @@ void* handle_client(void* arg) {
                     sscanf(buffer, "%s", isbn);
                     const char* title = search_book(books, book_count, isbn);
                     snprintf(buffer, BUFFER_SIZE, "Book found: %s\n", title);
-                    send(client_socket, buffer, strlen(buffer), 0);
+                    send(client_socket, buffer, strlen("Book found:  "+strlen(title)), 0);
                     break;
                 }
                 case 3:

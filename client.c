@@ -14,8 +14,9 @@ int main(){
     serv.sin_addr.s_addr = inet_addr("127.0.0.1");
     serv.sin_port = htons(8080);
     connect(sd,(struct sockaddr *)&serv,sizeof(serv));
+    char buf[1024] = {0};
     while(1){
-        char buf[1024] = {0};
+        memset(buf, 0, sizeof(buf));
         read(sd, buf, sizeof(buf));
         printf("%s\n", buf);
         if(buf[0] == 'E' && buf[1] == 'x' && buf[2] == 'i' && buf[3] == 't'){
@@ -24,6 +25,8 @@ int main(){
         memset(buf, 0, sizeof(buf));
         fgets(buf, sizeof(buf), stdin);
         write(sd, buf, sizeof(buf));
+        memset(buf, 0, sizeof(buf));
+        sleep(0.5);
     }
     close(sd);
 }
