@@ -240,7 +240,7 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s %[^\n]", isbn, title);
-                    if(strlen(title) == 0 || !(isbn > "10000" && isbn < "99999")) {
+                    if(strlen(title) == 0 || (isbn > "10000" && isbn < "99999")) {
                         snprintf(buffer, BUFFER_SIZE, "Invalid input. Try again.\n");
                         send(client_socket, buffer, strlen(buffer), 0);
                         break;
