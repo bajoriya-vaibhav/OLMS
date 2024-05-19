@@ -149,14 +149,14 @@ void issue_book(int client_socket, Book books[], int book_count, const char *use
             }
         }
         if (t != -1 && books[t].available == 0) {
-            snprintf(response, BUFFER_SIZE, "Book is already issued.\n");
+            snprintf(response, BUFFER_SIZE, "Book is already issued.\nPress Enter to continue...\n");
         } else if (t != -1) {
             books[t].available = 0;  // Mark book as issued
             strcpy(books[t].user_id, userid);  // Assign the user ID to the book
             save_books(books, book_count);
-            snprintf(response, BUFFER_SIZE, "Book issued successfully: %s\n", books[t].title);
+            snprintf(response, BUFFER_SIZE, "Book issued successfully: %s\nPress Enter to continue...\n", books[t].title);
         } else {
-            snprintf(response, BUFFER_SIZE, "An unexpected error occurred.\n");
+            snprintf(response, BUFFER_SIZE, "An unexpected error occurred.\nPress Enter to continue...\n");
         }
     }
 
@@ -197,9 +197,9 @@ void return_book(int client_socket,Book books[],int book_count, const char *user
             books[t].available = 1;  // Mark book as available
             strcpy(books[t].user_id, "NULL");  // Remove the user ID from the book
             save_books(books, book_count);
-            snprintf(response, BUFFER_SIZE, "Book successfully returned.\n");
+            snprintf(response, BUFFER_SIZE, "Book successfully returned.\nPress Enter to continue...\n");
         }else {
-            snprintf(response, BUFFER_SIZE, "Book already returned or An unexpected error occurred.\n");
+            snprintf(response, BUFFER_SIZE, "Book already returned or An unexpected error occurred.\nPress Enter to continue...\n");
         }
     }
 

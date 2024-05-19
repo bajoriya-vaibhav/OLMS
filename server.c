@@ -27,10 +27,10 @@ void manage_users(int client_socket) {
         memset(buffer, 0, BUFFER_SIZE);
         read(client_socket, buffer, BUFFER_SIZE);
         choice = atoi(buffer);
+        memset(buffer, 0, BUFFER_SIZE);
 
         switch (choice) {
             case 1:
-                memset(buffer, 0, BUFFER_SIZE);
                 pthread_mutex_lock(&file_mutex);
                 snprintf(buffer, BUFFER_SIZE, "%s", list_users(users, user_count));
                 send(client_socket, buffer, strlen(buffer), 0);
@@ -91,13 +91,14 @@ void manage_users(int client_socket) {
                     snprintf(buffer, BUFFER_SIZE, "User not found.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
-                    read(client_socket, buffer, BUFFER_SIZE);
-                    memset(buffer, 0, BUFFER_SIZE);
                 }
                 break;
             }
             case 4:
+                snprintf(buffer, BUFFER_SIZE, "Getting Out...\nPress Enter to continue...\n");
+                send(client_socket, buffer, strlen(buffer), 0);
                 return;
+                break;
             default:
                 snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
                 send(client_socket, buffer, strlen(buffer), 0);
@@ -116,12 +117,14 @@ int signup(int client_socket) {
     memset(buffer, 0, BUFFER_SIZE);
     read(client_socket, buffer, BUFFER_SIZE);
     sscanf(buffer, "%s", username);
+    memset(buffer, 0, BUFFER_SIZE);
     
     snprintf(buffer, BUFFER_SIZE, "Enter new password: ");
     send(client_socket, buffer, strlen(buffer), 0);
     memset(buffer, 0, BUFFER_SIZE);
     read(client_socket, buffer, BUFFER_SIZE);
     sscanf(buffer, "%s", password);
+    memset(buffer, 0, BUFFER_SIZE);
     
     pthread_mutex_lock(&file_mutex);
     int x = add_user(users, &user_count, username, password, false);  // New users are not admin by default
@@ -160,6 +163,7 @@ void* handle_client(void* arg) {
     memset(buffer, 0, BUFFER_SIZE);
     read(client_socket, buffer, BUFFER_SIZE);
     int choice = atoi(buffer);
+    memset(buffer, 0, BUFFER_SIZE);
 
     if (choice == 1) {
         while(1){
@@ -171,6 +175,7 @@ void* handle_client(void* arg) {
     }
     if (choice  == 1 || choice == 2){
         // Authentication
+        memset(buffer, 0, BUFFER_SIZE);
         send(client_socket, "\nEnter Login Credentials:\nUsername:", strlen("\nEnter Login Credentials:\nUsername:"), 0);
         read(client_socket, buffer, BUFFER_SIZE);
         char input_username[MAX_USERNAME_LENGTH];
@@ -213,24 +218,23 @@ void* handle_client(void* arg) {
 
         if (is_admin_user) {
             int choice = atoi(buffer);
+            memset(buffer, 0, BUFFER_SIZE);
             switch (choice) {
                 case 1:
                     manage_users(client_socket);
                     break;
                 case 2:
                     pthread_mutex_lock(&file_mutex);
-                    memset(buffer, 0, BUFFER_SIZE);
                     snprintf(buffer, BUFFER_SIZE, "Book Title   ISBN\n");
                     for (int i = 0; i < book_count; i++) {
                         char str[150] = {0};
                         sprintf(str, "%s    %s\n", books[i].title, books[i].isbn);
                         strncat(buffer, str, BUFFER_SIZE - strlen(buffer) - 1);
                     }
+                    strncat(buffer, "\nPress Enter to continue...\n", BUFFER_SIZE - strlen(buffer) - 1);
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
                     pthread_mutex_unlock(&file_mutex);
-                    // read(client_socket, buffer, BUFFER_SIZE);
-                    // memset(buffer, 0, BUFFER_SIZE);
                     break;
                 case 3: {
                     char isbn[MAX_ISBN_LENGTH];
@@ -250,8 +254,6 @@ void* handle_client(void* arg) {
                     pthread_mutex_unlock(&file_mutex);
                     snprintf(buffer, BUFFER_SIZE, "Book added successfully: %s.\nPress Enter to continue...\n", title);
                     send(client_socket, buffer, strlen(buffer), 0);
-                    read(client_socket, buffer, BUFFER_SIZE);
-                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 }
                 case 4: {
@@ -265,11 +267,11 @@ void* handle_client(void* arg) {
                     int x = delete_book(books, &book_count, isbn);
                     pthread_mutex_unlock(&file_mutex);
                     if(x){
-                        snprintf(buffer, BUFFER_SIZE, "Book deleted successfully.\n");
+                        snprintf(buffer, BUFFER_SIZE, "Book deleted successfully.\nPress Enter to continue...\n");
                         send(client_socket, buffer, strlen(buffer), 0);
                     }
                     else{
-                        snprintf(buffer, BUFFER_SIZE, "Book not found.\n");
+                        snprintf(buffer, BUFFER_SIZE, "Book not found.\nPress Enter to continue...\n");
                         send(client_socket, buffer, strlen(buffer), 0);
                     }
                     break;
@@ -283,30 +285,36 @@ void* handle_client(void* arg) {
                     sscanf(buffer, "%s", isbn);
                     memset(buffer, 0, BUFFER_SIZE);
                     const char* title = search_book(books, book_count, isbn);
-                    snprintf(buffer, BUFFER_SIZE, "Book found: %s\n", title);
-                    send(client_socket, buffer, strlen("Book found:  "+strlen(title)), 0);
+                    snprintf(buffer, BUFFER_SIZE, "Book found: %s\nPress Enter to continue...\n", title);
+                    send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 }
                 case 6:
                     authenticated = 0;
-                    snprintf(buffer, BUFFER_SIZE, "Exiting...\n");
+                    snprintf(buffer, BUFFER_SIZE, "Getting Out...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 default:
-                    snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice. Try again.\n");
+                    snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
             }
+            read(client_socket, buffer, BUFFER_SIZE);
+            memset(buffer, 0, BUFFER_SIZE);
         } else {
             int choice = atoi(buffer);
             switch (choice) {
                 case 1:
                     pthread_mutex_lock(&file_mutex);
+                    snprintf(buffer, BUFFER_SIZE, "Book Title   ISBN\n");
                     for (int i = 0; i < book_count; i++) {
-                        snprintf(buffer, BUFFER_SIZE, "Book Title: %s, ISBN: %s\n", books[i].title, books[i].isbn);
-                        send(client_socket, buffer, strlen(buffer), 0);
-                        memset(buffer, 0, BUFFER_SIZE);
+                        char str[150] = {0};
+                        sprintf(str, "%s    %s\n", books[i].title, books[i].isbn);
+                        strncat(buffer, str, BUFFER_SIZE - strlen(buffer) - 1);
                     }
+                    strncat(buffer, "\nPress Enter to continue...\n", BUFFER_SIZE - strlen(buffer) - 1);
+                    send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     pthread_mutex_unlock(&file_mutex);
                     break;
                 case 2: {
@@ -316,9 +324,10 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s", isbn);
+                    memset(buffer, 0, BUFFER_SIZE);
                     const char* title = search_book(books, book_count, isbn);
-                    snprintf(buffer, BUFFER_SIZE, "Book found: %s\n", title);
-                    send(client_socket, buffer, strlen("Book found:  "+strlen(title)), 0);
+                    snprintf(buffer, BUFFER_SIZE, "Book found: %s\nPress Enter to continue...\n", title);
+                    send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 }
                 case 3:
@@ -345,10 +354,12 @@ void* handle_client(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
                 default:
-                    snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice. Try again.\n");
+                    snprintf(buffer, BUFFER_SIZE, "Invalid choice.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     break;
             }
+            read(client_socket, buffer, BUFFER_SIZE);
+            memset(buffer, 0, BUFFER_SIZE);
         }
     }
 
