@@ -102,7 +102,7 @@ int add_user(User users[], int* user_count, const char* username, const char* pa
         }
     }
     char str[6];
-    sprintf(str, "%d", 10000+*user_count);
+    sprintf(str, "%d", 10000+*user_count+1);
     strcpy(users[*user_count].user_id,str);
     strcpy(users[*user_count].username, username);
     strcpy(users[*user_count].password, password);
