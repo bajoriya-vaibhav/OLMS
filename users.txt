@@ -6,4 +6,3 @@
 10006 Bajoriya_Vaibhav 123 0
 10007 CJ 123 0
 10008 Test 123 0
-10009 Mock 123 1
