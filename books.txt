@@ -6,4 +6,4 @@
 10005 1 NULL Lets talk about money
 10006 1 NULL The monk who Lost his Ferrari
 10007 1 NULL The Intelligent Investor
-10008 1 NULL The classroom of the Elite
+10008 0 10007 The classroom of the Elite

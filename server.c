@@ -316,6 +316,7 @@ void* handle_client(void* arg) {
                 case 6:
                     authenticated = 0;
                     snprintf(buffer, BUFFER_SIZE, "Exiting ...\n");
+                    snprintf(buffer, BUFFER_SIZE, "Exiting ...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
                     return NULL;
