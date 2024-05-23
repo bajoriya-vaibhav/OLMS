@@ -2,6 +2,7 @@
 #define USER_H
 
 #include <stdbool.h>
+#include "library.h"
 
 #define MAX_USERS 100
 #define MAX_USERNAME_LENGTH 50
@@ -19,7 +20,7 @@ bool is_admin(User users[], int user_count, const char* username);
 void load_users(User users[], int* user_count);
 void save_users(User users[], int user_count);
 int add_user(User users[], int* user_count, const char* username, const char* password, bool is_admin);
-int delete_user(User users[], int* user_count, const char* username);
+int delete_user(User users[], int* user_count, const char* username,Book books[],int book_count);
 char * list_users(User users[], int user_count);
 
 #endif

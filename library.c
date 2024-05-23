@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <fcntl.h> // For fcntl
 
-extern pthread_mutex_t file_mutex;
+extern pthread_mutex_t global_mutex;
 
 void load_books(Book books[], int *book_count) {
     int fd = open("books.txt", O_RDONLY);
@@ -132,7 +132,7 @@ void issue_book(int client_socket, Book books[], int book_count, const char *use
     buffer[strcspn(buffer, "\n")] = 0;  // Ensure null-termination
     sscanf(buffer, "%s", isbn);
 
-    pthread_mutex_lock(&file_mutex);
+    pthread_mutex_lock(&global_mutex);
 
     // Check if the book exists
     const char* title = search_book(books, book_count, isbn);
@@ -160,7 +160,7 @@ void issue_book(int client_socket, Book books[], int book_count, const char *use
         }
     }
 
-    pthread_mutex_unlock(&file_mutex);
+    pthread_mutex_unlock(&global_mutex);
     send(client_socket, response, strlen(response), 0);
 }
 
@@ -176,7 +176,7 @@ void return_book(int client_socket,Book books[],int book_count, const char *user
     buffer[strcspn(buffer, "\n")] = 0;  // Ensure null-termination
     sscanf(buffer, "%s", isbn);
 
-    pthread_mutex_lock(&file_mutex);
+    pthread_mutex_lock(&global_mutex);
 
     // Check if the book exists
     const char* title = search_book(books, book_count, isbn);
@@ -203,6 +203,6 @@ void return_book(int client_socket,Book books[],int book_count, const char *user
         }
     }
 
-    pthread_mutex_unlock(&file_mutex);
+    pthread_mutex_unlock(&global_mutex);
     send(client_socket, response, strlen(response), 0);
 }

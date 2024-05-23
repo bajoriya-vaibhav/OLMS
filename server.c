@@ -14,7 +14,7 @@ User users[MAX_USERS];
 int user_count = 1;
 Book books[MAX_BOOKS];
 int book_count;
-pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;;
+pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;;
 
 void manage_users(int client_socket) {
     char buffer[BUFFER_SIZE] = {0};
@@ -31,11 +31,12 @@ void manage_users(int client_socket) {
 
         switch (choice) {
             case 1:
-                pthread_mutex_lock(&file_mutex);
+                pthread_mutex_lock(&global_mutex);
                 snprintf(buffer, BUFFER_SIZE, "%s", list_users(users, user_count));
+                strncat(buffer, "Press Enter to continue...\n", BUFFER_SIZE - strlen(buffer) - 1);
                 send(client_socket, buffer, strlen(buffer), 0);
                 memset(buffer, 0, BUFFER_SIZE);
-                pthread_mutex_unlock(&file_mutex);
+                pthread_mutex_unlock(&global_mutex);
                 break;
             case 2: {
                 char new_username[MAX_USERNAME_LENGTH];
@@ -56,20 +57,23 @@ void manage_users(int client_socket) {
                 memset(buffer, 0, BUFFER_SIZE);
                 read(client_socket, buffer, BUFFER_SIZE);
                 sscanf(buffer, "%d", &is_admin);
-                pthread_mutex_lock(&file_mutex);
+                pthread_mutex_lock(&global_mutex);
                 int x = add_user(users, &user_count, new_username, new_password, is_admin);
-                pthread_mutex_unlock(&file_mutex);
+                pthread_mutex_unlock(&global_mutex);
                 if(x == 1){
-                    snprintf(buffer, BUFFER_SIZE, "User added successfully.\n");
+                    snprintf(buffer, BUFFER_SIZE, "User added successfully.\nPress Enter to continue...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                 }
                 else if(x==-1){
-                    snprintf(buffer, BUFFER_SIZE, "Username Already exist.\n");
+                    snprintf(buffer, BUFFER_SIZE, "Username Already exist.\nPress Enter to continue...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                 }
                 else{
-                    snprintf(buffer, BUFFER_SIZE, "User limit reached. Cannot add more users. Or Some Error Occurred...\n");
+                    snprintf(buffer, BUFFER_SIZE, "User limit reached. Cannot add more users. Or Some Error Occurred...\nPress Enter to continue...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                 }
                 break;
             }
@@ -80,30 +84,36 @@ void manage_users(int client_socket) {
                 memset(buffer, 0, BUFFER_SIZE);
                 read(client_socket, buffer, BUFFER_SIZE);
                 sscanf(buffer, "%s", del_username);
-                pthread_mutex_lock(&file_mutex);
-                int x = delete_user(users, &user_count, del_username);
-                pthread_mutex_unlock(&file_mutex);
+                pthread_mutex_lock(&global_mutex);
+                int x = delete_user(users, &user_count, del_username,books,book_count);
+                save_books(books, book_count);
                 if(x){
-                    snprintf(buffer, BUFFER_SIZE, "User deleted successfully.\n");
-                    send(client_socket, buffer, strlen(buffer), 0);
-                }
-                else{
-                    snprintf(buffer, BUFFER_SIZE, "User not found.\n");
+                    snprintf(buffer, BUFFER_SIZE, "User deleted successfully.\nPress Enter to continue...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
                 }
+                else{
+                    snprintf(buffer, BUFFER_SIZE, "User not found.\nPress Enter to continue...\n");
+                    send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
+                }
+                pthread_mutex_unlock(&global_mutex);
                 break;
             }
             case 4:
                 snprintf(buffer, BUFFER_SIZE, "Getting Out...\nPress Enter to continue...\n");
                 send(client_socket, buffer, strlen(buffer), 0);
+                memset(buffer, 0, BUFFER_SIZE);
                 return;
                 break;
             default:
                 snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
                 send(client_socket, buffer, strlen(buffer), 0);
+                memset(buffer, 0, BUFFER_SIZE);
                 break;
         }
+        read(client_socket, buffer, BUFFER_SIZE);
+        memset(buffer, 0, BUFFER_SIZE);
     }
 }
 
@@ -126,22 +136,25 @@ int signup(int client_socket) {
     sscanf(buffer, "%s", password);
     memset(buffer, 0, BUFFER_SIZE);
     
-    pthread_mutex_lock(&file_mutex);
+    pthread_mutex_lock(&global_mutex);
     int x = add_user(users, &user_count, username, password, false);  // New users are not admin by default
-    pthread_mutex_unlock(&file_mutex);
+    pthread_mutex_unlock(&global_mutex);
     
     if(x == 1){
         snprintf(buffer, BUFFER_SIZE, "Signup successful. You can now login with your new credentials.\n");
         send(client_socket, buffer, strlen(buffer), 0);
+        memset(buffer, 0, BUFFER_SIZE);
     }
     else if(x==-1){
         snprintf(buffer, BUFFER_SIZE, "Username Already exist.\n");
         send(client_socket, buffer, strlen(buffer), 0);
+        memset(buffer, 0, BUFFER_SIZE);
         return 0;
     }
     else{
         snprintf(buffer, BUFFER_SIZE, "User limit reached. Cannot add more users. Or Some Error Occurred...\n");
         send(client_socket, buffer, strlen(buffer), 0);
+        memset(buffer, 0, BUFFER_SIZE);
         return 0;
     }
     return 1;
@@ -177,6 +190,7 @@ void* handle_client(void* arg) {
         // Authentication
         memset(buffer, 0, BUFFER_SIZE);
         send(client_socket, "\nEnter Login Credentials:\nUsername:", strlen("\nEnter Login Credentials:\nUsername:"), 0);
+        memset(buffer, 0, BUFFER_SIZE);
         read(client_socket, buffer, BUFFER_SIZE);
         char input_username[MAX_USERNAME_LENGTH];
         char input_password[MAX_PASSWORD_LENGTH];
@@ -193,6 +207,7 @@ void* handle_client(void* arg) {
         } else {
             snprintf(buffer, BUFFER_SIZE, "Exit Authentication failed\n");
             send(client_socket, buffer, strlen(buffer), 0);
+            memset(buffer, 0, BUFFER_SIZE);
             close(client_socket);
             return NULL;
         }
@@ -200,6 +215,7 @@ void* handle_client(void* arg) {
     else {
         snprintf(buffer, BUFFER_SIZE, "Exit Invalid choice\n");
         send(client_socket, buffer, strlen(buffer), 0);
+        memset(buffer, 0, BUFFER_SIZE);
         close(client_socket);
         return NULL;
     }
@@ -224,7 +240,7 @@ void* handle_client(void* arg) {
                     manage_users(client_socket);
                     break;
                 case 2:
-                    pthread_mutex_lock(&file_mutex);
+                    pthread_mutex_lock(&global_mutex);
                     snprintf(buffer, BUFFER_SIZE, "Book Title   ISBN\n");
                     for (int i = 0; i < book_count; i++) {
                         char str[150] = {0};
@@ -234,9 +250,10 @@ void* handle_client(void* arg) {
                     strncat(buffer, "\nPress Enter to continue...\n", BUFFER_SIZE - strlen(buffer) - 1);
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
-                    pthread_mutex_unlock(&file_mutex);
+                    pthread_mutex_unlock(&global_mutex);
                     break;
                 case 3: {
+                    char buffer[BUFFER_SIZE];
                     char isbn[MAX_ISBN_LENGTH];
                     char title[MAX_TITLE_LENGTH];
                     snprintf(buffer, BUFFER_SIZE, "Enter ISBN and Title (ISBN Title): ");
@@ -244,16 +261,20 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s %[^\n]", isbn, title);
-                    if(strlen(title) == 0 || (isbn > "10000" && isbn < "99999")) {
-                        snprintf(buffer, BUFFER_SIZE, "Invalid input. Try again.\n");
+                    int low = 10000 + book_count;
+                    int isbn_num = atoi(isbn);
+                    if (strlen(title) == 0 || !(isbn_num > low && isbn_num < 99999)) {
+                        snprintf(buffer, BUFFER_SIZE, "Invalid input. Try again.\nPress Enter to continue...\n");
                         send(client_socket, buffer, strlen(buffer), 0);
-                        break;
+                        memset(buffer, 0, BUFFER_SIZE);
+                        break; 
                     }
-                    pthread_mutex_lock(&file_mutex);
+                    pthread_mutex_lock(&global_mutex);
                     add_book(books, &book_count, isbn, title);
-                    pthread_mutex_unlock(&file_mutex);
+                    pthread_mutex_unlock(&global_mutex);
                     snprintf(buffer, BUFFER_SIZE, "Book added successfully: %s.\nPress Enter to continue...\n", title);
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 }
                 case 4: {
@@ -263,16 +284,18 @@ void* handle_client(void* arg) {
                     memset(buffer, 0, BUFFER_SIZE);
                     read(client_socket, buffer, BUFFER_SIZE);
                     sscanf(buffer, "%s", isbn);
-                    pthread_mutex_lock(&file_mutex);
+                    pthread_mutex_lock(&global_mutex);
                     int x = delete_book(books, &book_count, isbn);
-                    pthread_mutex_unlock(&file_mutex);
+                    pthread_mutex_unlock(&global_mutex);
                     if(x){
                         snprintf(buffer, BUFFER_SIZE, "Book deleted successfully.\nPress Enter to continue...\n");
                         send(client_socket, buffer, strlen(buffer), 0);
+                        memset(buffer, 0, BUFFER_SIZE);
                     }
                     else{
                         snprintf(buffer, BUFFER_SIZE, "Book not found.\nPress Enter to continue...\n");
                         send(client_socket, buffer, strlen(buffer), 0);
+                        memset(buffer, 0, BUFFER_SIZE);
                     }
                     break;
                 }
@@ -287,17 +310,20 @@ void* handle_client(void* arg) {
                     const char* title = search_book(books, book_count, isbn);
                     snprintf(buffer, BUFFER_SIZE, "Book found: %s\nPress Enter to continue...\n", title);
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 }
                 case 6:
                     authenticated = 0;
                     snprintf(buffer, BUFFER_SIZE, "Exiting ...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     return NULL;
                     break;
                 default:
                     snprintf(buffer, BUFFER_SIZE, "Invalid choice. Try again.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
             }
             read(client_socket, buffer, BUFFER_SIZE);
@@ -306,7 +332,7 @@ void* handle_client(void* arg) {
             int choice = atoi(buffer);
             switch (choice) {
                 case 1:
-                    pthread_mutex_lock(&file_mutex);
+                    pthread_mutex_lock(&global_mutex);
                     snprintf(buffer, BUFFER_SIZE, "Book Title   ISBN\n");
                     for (int i = 0; i < book_count; i++) {
                         char str[150] = {0};
@@ -316,7 +342,7 @@ void* handle_client(void* arg) {
                     strncat(buffer, "\nPress Enter to continue...\n", BUFFER_SIZE - strlen(buffer) - 1);
                     send(client_socket, buffer, strlen(buffer), 0);
                     memset(buffer, 0, BUFFER_SIZE);
-                    pthread_mutex_unlock(&file_mutex);
+                    pthread_mutex_unlock(&global_mutex);
                     break;
                 case 2: {
                     char isbn[MAX_ISBN_LENGTH];
@@ -329,6 +355,7 @@ void* handle_client(void* arg) {
                     const char* title = search_book(books, book_count, isbn);
                     snprintf(buffer, BUFFER_SIZE, "Book found: %s\nPress Enter to continue...\n", title);
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 }
                 case 3:
@@ -353,10 +380,12 @@ void* handle_client(void* arg) {
                     authenticated = 0;
                     snprintf(buffer, BUFFER_SIZE, "Exiting...\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
                 default:
                     snprintf(buffer, BUFFER_SIZE, "Invalid choice.\n");
                     send(client_socket, buffer, strlen(buffer), 0);
+                    memset(buffer, 0, BUFFER_SIZE);
                     break;
             }
             read(client_socket, buffer, BUFFER_SIZE);

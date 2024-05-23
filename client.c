@@ -6,6 +6,11 @@
 #include <netinet/in.h>
 #include <string.h>
 
+void clear_stdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+}
+
 //client
 int main(){
     struct sockaddr_in serv;

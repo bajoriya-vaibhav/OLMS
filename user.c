@@ -112,11 +112,17 @@ int add_user(User users[], int* user_count, const char* username, const char* pa
     return 1;
 }
 
-int delete_user(User users[], int* user_count, const char* username) {
+int delete_user(User users[], int* user_count, const char* username,Book books[],int book_count) {
     int index = -1;
     for (int i = 0; i < *user_count; i++) {
         if (strcmp(users[i].username, username) == 0) {
             index = i;
+            for(int j=0;j<book_count;j++){
+                if(strcmp(books[j].user_id,users[i].user_id)==0){
+                    books[j].available = 1;
+                    strcpy(books[j].user_id,"NULL");
+                }
+            }
             break;
         }
     }
